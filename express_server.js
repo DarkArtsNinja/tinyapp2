@@ -12,6 +12,13 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+function generateRandomString() {
+  //generate a 6 alpha numeric character
+let newShortURL = Math.random().toString(36).substr(2, 6)
+return newShortURL;
+}
+
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -33,17 +40,42 @@ app.get("/urls/new", (req, res) => {
 });
 //ADDING NEW URLS
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  // console.log("this is what's submitted:", req.body);  // Log the POST request body to the console
+  const newShortURL = generateRandomString();
+  urlDatabase[newShortURL] = req.body.longURL;
+  // console.log(urlDatabase);
+  res.redirect(`/urls/${newShortURL}`);         // Respond with 'Ok' (we will replace this)
 });
 
 
-//URLS SHOW
+//SHOW THE TINY URLS PAGE
 app.get("/urls/:shortURL", (req, res) => {
   console.log(req.params);
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] }; 
   res.render("urls_show", templateVars);
 });
+//WHEN SOMEONE IS GIVEN A TINY URL
+app.get("/u/:shortURL", (req, res) => {
+  // console.log(req.params);
+
+  //how come nothing gets passed into here? but in function above ^^
+  //the req.params actually passes the data to the consolelog???!!
+  const inputTinyURL = req.params.shortURL;
+  console.log("app.get(/u/:shortURL, (req, res)");
+  console.log("this is the req.params:", req.params);
+  console.log("this is the req.params.shortURL:", req.params.shortURL);
+  console.log("this is the stored inputTinyURL:", inputTinyURL);
+  console.log("this is the urlDatabase:", urlDatabase);
+
+  // for (const i in urlDatabase) {
+  //   if (inputTinyURL !== urlDatabase[i]) {
+  //     return res.send("shortURL not registered!")
+  //   }
+  // }
+
+
+  res.redirect(urlDatabase[inputTinyURL]);
+})
 
 
 app.get("/hello", (req, res) => {
