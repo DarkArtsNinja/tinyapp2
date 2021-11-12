@@ -84,6 +84,12 @@ app.post("/logout", (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls");
 })
+//REGISTRATION PAGE
+app.get("/register", (req, res) => {
+  const templateVars = { username: req.cookies['username'], urls: urlDatabase };
+  res.render("register", templateVars)
+})
+
 
 
 
