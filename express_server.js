@@ -16,6 +16,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = { 
+  "dan": {
+    id: "danID", 
+    email: "dan@e.com", 
+    password: "123"
+  },
+ "bob": {
+    id: "bobID", 
+    email: "bob@e.com", 
+    password: "123"
+  }
+}
+
+
 function generateRandomString() {
   //generate a 6 alpha numeric character
 let newShortURL = Math.random().toString(36).substr(2, 6)
@@ -84,10 +98,21 @@ app.post("/logout", (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls");
 })
-//REGISTRATION PAGE
+//GOING REGISTRATION PAGE
 app.get("/register", (req, res) => {
   const templateVars = { username: req.cookies['username'], urls: urlDatabase };
   res.render("register", templateVars)
+})
+//REGISTRATION PAGE ADD USERNMAE & PASSWORD
+app.post("/register", (req, res) => {
+  //adding and saving a new username
+
+  //search if it's already there
+    if (users[i][email]) {
+      //the email already exists
+      res.send56
+    }
+  res.redirect("/urls")
 })
 
 

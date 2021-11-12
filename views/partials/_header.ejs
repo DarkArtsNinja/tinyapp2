@@ -8,26 +8,29 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        
       </div>
-      
     </div>
-    <div >
-      
-      <% if(username) { %>
-        <form method="POST" action="/logout" style="display: flex ; flex-direction: row; align-items: center;"> 
-       <label style="color: whitesmoke; font-weight: bold;">Hello, <%= username %></label>
-       <button type ="submit" style="background-color: whitesmoke ; color:black ; border-radius: 8px" >Log Out</button>
-       </form>
-        <% } else { %>
-        <form method="POST" action="/login" style="display: flex ; flex-direction: row; align-items: center;">
-          <input class="form-control" type="text" name="username" placeholder="username" style="width: 300px; margin: 1em">
-          <button type ="submit" style="background-color: whitesmoke ; color:black ; border-radius: 8px" >Log In</button>
-        </form>
-        <% } %>
+    
+
+    
+<%    if(user) { %>
+  <a class="nav-item nav-link" style="color:powderblue;" >  Logged In As: <%= registeredUsers[user]["email"] %></a>
+
+
+      <form action="/logout" method="POST">
+
+        <button type="submit">Log Out</button>
       </form>
-        
-      <!-- <form method="POST" action="/login"><button type ="submit" style="background-color: whitesmoke ; color:black ; border-radius: 8px" >Register</button></form> -->
-    </div>
-  </nav>
+ <%   } else {   %>
+    <form method="GET" action="/login">
+      <!-- <input class="authorization" type="text" name="username" placeholder="username" style="width: 300px; margin: 1em"> -->
+      <button type="submit">Log In</button>
+    </form>
+    <form method="GET" action="/register">
+      <!-- <input class="authorization" type="text" name="username" placeholder="username" style="width: 300px; margin: 1em"> -->
+      <button type="submit">Register</button>
+    </form>
+
+ <%    } %>
+</nav>
 </header>
