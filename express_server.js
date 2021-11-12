@@ -1,3 +1,6 @@
+const getUserByEmail = require("./helper");
+const emailAlreadyExists = require("./helper");
+
 
 const express = require("express")
 const cookieParser = require("cookie-session")
