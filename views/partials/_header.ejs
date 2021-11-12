@@ -15,8 +15,6 @@
     
 <%    if(user) { %>
   <a class="nav-item nav-link" style="color:powderblue;" >  Logged In As: <%= registeredUsers[user]["email"] %></a>
-
-
       <form action="/logout" method="POST">
 
         <button type="submit">Log Out</button>
