@@ -98,7 +98,10 @@ app.get("/u/:shortURL", (req, res) => {
   const inputTinyURL = req.params.shortURL;
   res.redirect(urlDatabase[inputTinyURL]);
 })
-
+if (!req.session.user_id) {
+  res.redirect("/login");
+  return;
+};
 //LOGIN PAGE
 app.get("/login", (req, res) => {
 
@@ -106,13 +109,21 @@ app.get("/login", (req, res) => {
 });
 
 
-app.post("/login", (req, res) => {
+app.post("/login", (req, res) => {  
+  if (!req.session.user_id) {
+  res.redirect("/login");
+  return;
+};
   res.cookie("username", req.body.username)
   console.log(req.cookies.cookie)
   res.redirect("/urls")
 })
 
 app.post("/register", (req, res) => {
+  if (!req.session.user_id) {
+    res.redirect("/login");
+    return;
+  };
   // console.log("request received");
   if (!req.body.email || !req.body.password) {
     console.log("entered the if statement")
@@ -140,7 +151,50 @@ app.post("/register", (req, res) => {
       return;
     };
   
-
+    app.post("/login", (req, res) =>{
+      if (!req.session.user_id) {
+        res.redirect("/login");
+        return;
+      };
+      //add the  login to the cookie objects from the form
+      //put the email and password in a variable
+      const submittedEmail = req.body.email;
+      const submittedPassword = req.body.password;
+    
+    
+    
+      console.log(submittedEmail + "<< this is email from the form");
+      console.log(submittedPassword + "<< this is password from the form");
+    //  user2@example.com
+    //  dishwasher-funk
+    
+      // let authorizer = null;
+    
+      let foundUser = false;
+    
+      let desiredUser = {};
+    
+      // console.log(users[user]['password']);
+    
+      for (const user in users) {
+        foundUser = users[user]['email'] === submittedEmail && bcrypt.compareSync(submittedPassword, users[user]['password']);
+        if(foundUser){
+          desiredUser = user;
+          break;
+        }
+      };
+      console.log(desiredUser);
+    
+      if(foundUser){
+        req.session.user_id = desiredUser;    
+        res.redirect('/urls')
+      } else{
+        //show the erorr
+        authorizer = false;
+        res.status(403).send("Either the email or password doesn't match"); 
+      }
+    
+    });
 //LOGOUT PAGE
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
@@ -161,7 +215,10 @@ app.post("/register", (req, res) => {
       //the email already exists
       return res.redirect("/login");
     }
-  }
+  }  if (!req.session.user_id) {
+    res.redirect("/login");
+    return;
+  };
   
   res.redirect("/urls")
 })
@@ -208,4 +265,3 @@ app.listen(PORT, () => {
 
 
 /////////////////////////
-
