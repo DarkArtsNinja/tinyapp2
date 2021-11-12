@@ -126,6 +126,20 @@ app.post("/register", (req, res) => {
     return;
   };
 
+  app.post("/register", (req, res) => {
+    // console.log("request received");
+    if (!req.body.email || !req.body.password) {
+      console.log("entered the if statement")
+      res.status(400).send("Either the email or password is missing, please fill it out");
+      return;
+    }
+    else if (emailAlreadyExists(req.body.email)) {
+      res.status(400).send("This email already exists");
+      res.status(400).send("<html> <head>Server Response</head><body><h1> This email already exists, please click on the <a href='/login'>login page</a></h1></body></html>");
+  
+      return;
+    };
+  
 
 //LOGOUT PAGE
 app.post("/logout", (req, res) => {
