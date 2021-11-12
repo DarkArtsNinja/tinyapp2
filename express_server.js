@@ -1,15 +1,47 @@
-const express = require("express");
-const app = express();
-const PORT = 8080; // default port 8080
+const getUserByEmail = require("./helper");
+const emailAlreadyExists = require("./helper");
+
+
+const express = require("express")
+const cookieParser = require("cookie-session")
+const app  = express()
+const PORT = 8080;
+app.set("view engine", "ejs");
+//***********************************************************************
+
 const bodyParser = require("body-parser");
+const { render } = require("ejs");
 app.use(bodyParser.urlencoded({extended: true}));
-const cookieParser = require('cookie-parser');
 
-//middleware
-app.use(cookieParser());
+app.use(cookieParser({
+  name : "session",
+  keys : ["key1", "key2"],
+  maxAge: 24 * 60 * 60 * 1000
+}))
+//***********************************************************************
+const bcrypt = require('bcryptjs'); //secure password
+//***********************************************************************
 
 
-app.set("view engine", "ejs")
+
+function generateRandomString() {
+  //generate a 6 alpha numeric character
+let newShortURL = Math.random().toString(36).substr(2, 6)
+return newShortURL;
+}
+
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
+  },
+ "user2RandomID": {
+   id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: bcrypt.hashSync("dishwasher-funk", 10)
+  }
+}
 
 const urlDatabase = {
   b6UTxQ: {
@@ -22,108 +54,160 @@ const urlDatabase = {
     userID: "aJ48lW"
     }
 };
-const users = { 
-  "dan": {
-    id: "danID", 
-    email: "dan@e.com", 
-    password: "123"
-  },
- "bob": {
-    id: "bobID", 
-    email: "bob@e.com", 
-    password: "123"
+  let userSpecificURLDatabase = {};
+
+function urlsForUser(userIDFromCookie){
+  userSpecificURLDatabase = {};
+
+  for (const shortURL in urlDatabase) {
+    // console.log(urlDatabase[url]["userID"]);
+    if (userIDFromCookie === urlDatabase[shortURL]["userID"]) {
+      userSpecificURLDatabase[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  if (userSpecificURLDatabase) {
+    return userSpecificURLDatabase
+  } else{
+    return false;
   }
 }
 
-
-function generateRandomString() {
-  //generate a 6 alpha numeric character
-let newShortURL = Math.random().toString(36).substr(2, 6)
-return newShortURL;
-}
-
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase)
-});
-
-//URLS INDEX
+///////////////////////////////////*this is for the URLS page*/
 app.get("/urls", (req, res) => {
+  // let userSpecificURLDatabase = {};
+  let userIDFromCookie = req.session.user_id;
 
-  const templateVars = { username: req.cookies['username'], urls: urlDatabase };
-  console.log(templateVars);
-  res.render("urls_index", templateVars);
-});
-//CREATE NEW URLS
-app.get("/urls/new", (req, res) => {
+  userSpecificURLDatabase = urlsForUser(userIDFromCookie);
 
-  const templateVars = { username: req.cookies['username'], urls: urlDatabase };
-  res.render("urls_new", templateVars);
+  const templateVars = { urls: userSpecificURLDatabase, user: req.session.user_id, registeredUsers: users };
+  if (!req.session.user_id) {
+    res.status(401).send("<html> <head>Server Response</head><body><h1> You are not logged in, you will be transferred to the <a href='/login'>login page</a></h1></body></html>");
+    return;
+  }
+
+  res.render("urls_index", templateVars); 
 });
-//CREATING ID OF TINYURL
+  // }
+
+
 app.post("/urls", (req, res) => {
-  // console.log("this is what's submitted:", req.body);  // Log the POST request body to the console
-  const newShortURL = generateRandomString();
-  urlDatabase[newShortURL] = req.body.longURL;
-  // console.log(urlDatabase);
-  res.redirect(`/urls/${newShortURL}`);         // Respond with 'Ok' (we will replace this)
-});
-//SHOW THE TINY URLS PAGE
-app.get("/urls/:shortURL", (req, res) => {
+  // console.log(req.body);  // Log the POST request body to the console
+  let tempShortURL = generateRandomString();
+  urlDatabase[tempShortURL] = { 
+                                "longURL" : req.body.longURL,
+                                "userID" : req.session.user_id 
+                              }
+  console.log(urlDatabase);
 
-  console.log(req.params);
-  const templateVars = { username: req.cookies['username'], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] }; 
+  // urlDatabase[tempShortURL]["longURL"] = req.body.longURL;
+  // urlDatabase[tempShortURL]["userID"] = req.session[user_id];
+
+
+  res.redirect("/urls/" + tempShortURL);         // Respond with 'Ok' (we will replace this)
+});
+
+///////////////////////////////////URLS/new page
+app.get("/urls/new", (req, res) => {
+  if (!req.session.user_id) {
+    res.status(401).send("<html> <head>Server Response</head><body><h1> You are not logged in, you will be transferred to the <a href='/login'>login page</a></h1></body></html>");
+    return;
+  };
+
+  // let userSpecificURLDatabase = {};
+  let userIDFromCookie = req.session.user_id;
+
+  userSpecificURLDatabase = urlsForUser(userIDFromCookie);
+
+  
+  // console.log(req.session);
+  // console.log(users);
+  // console.log(users[req.session.user_id]["email"]);
+
+  const templateVars = { urls: userSpecificURLDatabase, user: req.session.user_id, registeredUsers: users };
+  
+  res.render("urls_new", templateVars);
+
+});
+
+///////////////////////////////////URLSshort page
+app.get("/urls/:shortURL", (req, res) =>{
+  if (!req.session.user_id) {
+    res.status(401).send("<html> <head>Server Response</head><body><h1> You are not logged in, you will be transferred to the <a href='/login'>login page</a></h1></body></html>");
+    return;
+
+  };
+  // let userSpecificURLDatabase = {};
+  let userIDFromCookie = req.session.user_id;
+
+  userSpecificURLDatabase = urlsForUser(userIDFromCookie);
+  
+  
+  const templateVars = {shortURL: req.params.shortURL, longURL: userSpecificURLDatabase[req.params.shortURL]["longURL"], user: req.session.user_id, registeredUsers: users };
+  // console.log(req.session + "<<< this is from /urls/:shortURL ");
   res.render("urls_show", templateVars);
+})
+app.post("/urls/:shortURL", (req, res) => {
+
+
+  // let userSpecificURLDatabase = {};
+  let userIDFromCookie = req.session.user_id;
+
+  userSpecificURLDatabase = urlsForUser(userIDFromCookie);
+
+  
+  userSpecificURLDatabase[req.params.shortURL]["longURL"] = req.body.longURL
+  res.redirect("/urls");
+})
+
+app.get("/urls/:shortURL/delete", (req, res) => {
+  res.status(401).send("<html> <head>Server Response</head><body><h1> You cannot delete using this method, redirect to the <a href='/urls'>main page</a></h1></body></html>");
+
+  res.redirect("/urls");
+  return;
+
 });
 
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+
+  // let userSpecificURLDatabase = {};
+  let userIDFromCookie = req.session.user_id;
+  
+  console.log(urlDatabase[req.params.shortURL], userIDFromCookie);
+
+
+  if (urlDatabase[req.params.shortURL] && urlDatabase[req.params.shortURL].userID === userIDFromCookie) {
+    delete urlDatabase[req.params.shortURL];
+    res.redirect("/urls");         
+    return;
+  } else {
+    res.status(401).send("<html> <head>Server Response</head><body><h1> Cannot delete that which does not exist, you will be transferred to the <a href='/urls'>main page</a></h1></body></html>");
+
+  }
+  
+  
+  // console.log(urlDatabase);
+});
 app.get("/u/:shortURL", (req, res) => {
 
   const longURL = urlDatabase[req.params.shortURL]["longURL"];
   res.redirect(longURL);
 });
-//DELETE THE TINYURL AND LONG_URL
-app.post("/urls/:shortURL/delete", (req, res) => {
-  //why is req.params not pritting, even though in urls_index the action pathlink is there
-  console.log(req.params)
-  delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls");
-})
-//WHEN SOMEONE IS GIVEN A TINY URL
-app.get("/u/:shortURL", (req, res) => {
-  
-  const inputTinyURL = req.params.shortURL;
-  res.redirect(urlDatabase[inputTinyURL]);
-})
-if (!req.session.user_id) {
-  res.redirect("/login");
-  return;
-};
-//LOGIN PAGE
-app.get("/login", (req, res) => {
+//////////////////////registration page
+app.get("/register", (req, res) => {
 
-  res.render("login", {user: req.session.user_id});
-});
+  // console.log(Object.keys(req.session))
 
-
-app.post("/login", (req, res) => {  
-  if (!req.session.user_id) {
-  res.redirect("/login");
-  return;
-};
-  res.cookie("username", req.body.username)
-  console.log(req.cookies.cookie)
-  res.redirect("/urls")
-})
-
-app.post("/register", (req, res) => {
-  if (!req.session.user_id) {
+    if (req.session.user_id) {
     res.redirect("/login");
     return;
   };
+
+  const templateVars = { urls: urlDatabase, user: req.session[users.id], registeredUsers: users};
+  res.render("register", templateVars)
+});
+
+app.post("/register", (req, res) => {
   // console.log("request received");
   if (!req.body.email || !req.body.password) {
     console.log("entered the if statement")
@@ -137,131 +221,82 @@ app.post("/register", (req, res) => {
     return;
   };
 
-  app.post("/register", (req, res) => {
-    // console.log("request received");
-    if (!req.body.email || !req.body.password) {
-      console.log("entered the if statement")
-      res.status(400).send("Either the email or password is missing, please fill it out");
-      return;
-    }
-    else if (emailAlreadyExists(req.body.email)) {
-      res.status(400).send("This email already exists");
-      res.status(400).send("<html> <head>Server Response</head><body><h1> This email already exists, please click on the <a href='/login'>login page</a></h1></body></html>");
-  
-      return;
-    };
-  
-    app.post("/login", (req, res) =>{
-      if (!req.session.user_id) {
-        res.redirect("/login");
-        return;
-      };
-      //add the  login to the cookie objects from the form
-      //put the email and password in a variable
-      const submittedEmail = req.body.email;
-      const submittedPassword = req.body.password;
-    
-    
-    
-      console.log(submittedEmail + "<< this is email from the form");
-      console.log(submittedPassword + "<< this is password from the form");
-    //  user2@example.com
-    //  dishwasher-funk
-    
-      // let authorizer = null;
-    
-      let foundUser = false;
-    
-      let desiredUser = {};
-    
-      // console.log(users[user]['password']);
-    
-      for (const user in users) {
-        foundUser = users[user]['email'] === submittedEmail && bcrypt.compareSync(submittedPassword, users[user]['password']);
-        if(foundUser){
-          desiredUser = user;
-          break;
-        }
-      };
-      console.log(desiredUser);
-    
-      if(foundUser){
-        req.session.user_id = desiredUser;    
-        res.redirect('/urls')
-      } else{
-        //show the erorr
-        authorizer = false;
-        res.status(403).send("Either the email or password doesn't match"); 
-      }
-    
-    });
-//LOGOUT PAGE
-app.post("/logout", (req, res) => {
-  res.clearCookie("username");
-  res.redirect("/urls");
-})
-//GOING REGISTRATION PAGE
-app.get("/register", (req, res) => {
-  const templateVars = { username: req.cookies['username'], urls: urlDatabase };
-  res.render("register", templateVars)
-})
-//REGISTRATION PAGE ADD USERNMAE & PASSWORD
-app.post("/register", (req, res) => {
-  //adding and saving a new username
+  let newID = generateRandomString();
 
-  //search if it's already there
-  for (const i in users) {
-    if (users[i][email]) {
-      //the email already exists
-      return res.redirect("/login");
+  users[newID] =   {
+    id : newID,
+    email : req.body.email, 
+    password : bcrypt.hashSync(req.body.password, 10)   
+  }
+
+  console.log(users[newID]["password"])
+
+  req.session.user_id = newID;
+  res.redirect("/urls");
+
+});
+/////////////////////LOGIN PAGE & BUTTONS
+app.get("/login", (req, res) => {
+
+  res.render("login", {user: req.session.user_id});
+});
+
+
+app.post("/login", (req, res) =>{
+  //add the  login to the cookie objects from the form
+  //put the email and password in a variable
+  const submittedEmail = req.body.email;
+  const submittedPassword = req.body.password;
+
+
+
+  console.log(submittedEmail + "<< this is email from the form");
+  console.log(submittedPassword + "<< this is password from the form");
+//  user2@example.com
+//  dishwasher-funk
+
+  // let authorizer = null;
+
+  let foundUser = false;
+
+  let desiredUser = {};
+
+  // console.log(users[user]['password']);
+
+  for (const user in users) {
+    foundUser = users[user]['email'] === submittedEmail && bcrypt.compareSync(submittedPassword, users[user]['password']);
+    if(foundUser){
+      desiredUser = user;
+      break;
     }
-  }  if (!req.session.user_id) {
+  };
+  console.log(desiredUser);
+
+  if(foundUser){
+    req.session.user_id = desiredUser;    
+    res.redirect('/urls')
+  } else{
+    //show the erorr
+    authorizer = false;
+    res.status(403).send("Either the email or password doesn't match"); 
+  }
+
+});
+app.post("/logout", (req, res) => {
+  req.session = null;
+  res.redirect("/urls"); 
+});
+
+app.get("/hello", (req, res) => {
+  if (!req.session.user_id) {
     res.redirect("/login");
     return;
   };
-  
-  res.redirect("/urls")
-})
 
-
-
-
-
-app.get("/hello", (req, res) => {
-  const templateVars = { greeting : "Hello World" };
-  res.render("hello_world", templateVars);
+  const templateVars = { greeting: 'Hello World!', user: req.session.user_id };
+  res.render("urls_show", templateVars);
 });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-
-
-//*************this stores functions with commented out code that is helpful to debug errors but would clutter the readability of the file*****************************************
-
-// app.get("/u/:shortURL", (req, res) => {
-
-    // console.log(req.params);
-  //how come nothing gets passed into here? but in function above ^^
-  //the req.params actually passes the data to the consolelog???!!
-  // console.log("app.get(/u/:shortURL, (req, res)");
-  // console.log("this is the req.params:", req.params);
-  // console.log("this is the req.params.shortURL:", req.params.shortURL);
-  // console.log("this is the stored inputTinyURL:", inputTinyURL);
-  // console.log("this is the urlDatabase:", urlDatabase);
-
-  // for (const i in urlDatabase) {
-  //   if (inputTinyURL !== urlDatabase[i]) {
-    //     return res.send("shortURL not registered!")
-    //   }
-    // }
-
-  // const inputTinyURL = req.params.shortURL;
-
-// res.redirect(urlDatabase[inputTinyURL]);
-
-// })
-
-
-/////////////////////////
