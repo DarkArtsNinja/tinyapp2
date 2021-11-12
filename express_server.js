@@ -82,17 +82,39 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 })
 //WHEN SOMEONE IS GIVEN A TINY URL
 app.get("/u/:shortURL", (req, res) => {
-
+  
   const inputTinyURL = req.params.shortURL;
   res.redirect(urlDatabase[inputTinyURL]);
 })
 
 //LOGIN PAGE
+app.get("/login", (req, res) => {
+
+  res.render("login", {user: req.session.user_id});
+});
+
+
 app.post("/login", (req, res) => {
   res.cookie("username", req.body.username)
   console.log(req.cookies.cookie)
   res.redirect("/urls")
 })
+
+app.post("/register", (req, res) => {
+  // console.log("request received");
+  if (!req.body.email || !req.body.password) {
+    console.log("entered the if statement")
+    res.status(400).send("Either the email or password is missing, please fill it out");
+    return;
+  }
+  else if (emailAlreadyExists(req.body.email)) {
+    res.status(400).send("This email already exists");
+    res.status(400).send("<html> <head>Server Response</head><body><h1> This email already exists, please click on the <a href='/login'>login page</a></h1></body></html>");
+
+    return;
+  };
+
+
 //LOGOUT PAGE
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
@@ -108,10 +130,13 @@ app.post("/register", (req, res) => {
   //adding and saving a new username
 
   //search if it's already there
+  for (const i in users) {
     if (users[i][email]) {
       //the email already exists
-      res.send56
+      return res.redirect("/login");
     }
+  }
+  
   res.redirect("/urls")
 })
 
@@ -154,3 +179,7 @@ app.listen(PORT, () => {
 // res.redirect(urlDatabase[inputTinyURL]);
 
 // })
+
+
+/////////////////////////
+
