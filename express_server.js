@@ -1,6 +1,6 @@
+
 const getUserByEmail = require("./helper");
 const emailAlreadyExists = require("./helper");
-
 
 const express = require("express")
 const cookieParser = require("cookie-session")
@@ -23,6 +23,29 @@ const bcrypt = require('bcryptjs'); //secure password
 //***********************************************************************
 
 
+//////HELPER FUNCTIONS***********
+
+// const getUserByEmail = function(email, database){
+
+//   for (const user in users) {
+//     if (users[user.email] === submittedEmail) {
+//       return user.id;
+//     } 
+//   }
+//   return false;
+
+// };
+
+// const emailAlreadyExists = function(submittedEmail){
+//   for (const user in users) {
+//     if (users[user.email] === submittedEmail) {
+//       return true;
+//     } 
+//   }
+//   return false;
+// }
+
+//******************************************************************** */
 
 function generateRandomString() {
   //generate a 6 alpha numeric character
@@ -300,3 +323,6 @@ app.get("/hello", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+
+module.exports = {users};

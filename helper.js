@@ -1,3 +1,4 @@
+const users = require("./express_server");
 
 const getUserByEmail = function(email, database){
 
@@ -10,7 +11,7 @@ const getUserByEmail = function(email, database){
 
 };
 
-function emailAlreadyExists(submittedEmail){
+const emailAlreadyExists = function(submittedEmail){
   for (const user in users) {
     if (users[user.email] === submittedEmail) {
       return true;
@@ -19,5 +20,8 @@ function emailAlreadyExists(submittedEmail){
   return false;
 }
 
-module.exports = getUserByEmail;
-module.exports = emailAlreadyExists;
+module.exports = {getUserByEmail, emailAlreadyExists};
+
+
+
+
