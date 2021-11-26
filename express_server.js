@@ -22,30 +22,7 @@ app.use(cookieParser({
 const bcrypt = require('bcryptjs'); //secure password
 //***********************************************************************
 
-
-//////HELPER FUNCTIONS***********
-
-// const getUserByEmail = function(email, database){
-
-//   for (const user in users) {
-//     if (users[user.email] === submittedEmail) {
-//       return user.id;
-//     } 
-//   }
-//   return false;
-
-// };
-
-// const emailAlreadyExists = function(submittedEmail){
-//   for (const user in users) {
-//     if (users[user.email] === submittedEmail) {
-//       return true;
-//     } 
-//   }
-//   return false;
-// }
-
-//******************************************************************** */
+//This will generate a random string, useful for genrating new Tiny URLS and etc 
 
 function generateRandomString() {
   //generate a 6 alpha numeric character
@@ -53,6 +30,7 @@ let newShortURL = Math.random().toString(36).substr(2, 6)
 return newShortURL;
 }
 
+//this is the database of users that will be verified against, other users are stored in the cookies
 const users = { 
   "userRandomID": {
     id: "userRandomID", 
@@ -83,7 +61,6 @@ function urlsForUser(userIDFromCookie){
   userSpecificURLDatabase = {};
 
   for (const shortURL in urlDatabase) {
-    // console.log(urlDatabase[url]["userID"]);
     if (userIDFromCookie === urlDatabase[shortURL]["userID"]) {
       userSpecificURLDatabase[shortURL] = urlDatabase[shortURL];
     }
@@ -94,7 +71,7 @@ function urlsForUser(userIDFromCookie){
     return false;
   }
 }
-
+//*this is the route for the /  page*/
 app.get("/", (req, res) => {
 
   let userIDFromCookie = req.session.user_id;
@@ -110,7 +87,7 @@ app.get("/", (req, res) => {
   res.render("urls_index", templateVars); 
 });
 
-///////////////////////////////////*this is for the URLS page*/
+//*this is the route for the URLS page*/
 app.get("/urls", (req, res) => {
   // let userSpecificURLDatabase = {};
   let userIDFromCookie = req.session.user_id;
