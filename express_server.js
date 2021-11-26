@@ -117,8 +117,13 @@ app.post("/urls", (req, res) => {
   // urlDatabase[tempShortURL]["longURL"] = req.body.longURL;
   // urlDatabase[tempShortURL]["userID"] = req.session[user_id];
 
+  res.redirect("/urls"); 
+  if (!req.session.user_id) {
+    res.status(401).send("<html> <head>Server Response</head><body><h1> You are not logged in, you will be transferred to the <a href='/login'>login page</a></h1></body></html>");
+    return;
+  }
 
-  res.redirect("/urls/" + tempShortURL);         // Respond with 'Ok' (we will replace this)
+  // res.redirect("/urls/" + tempShortURL);         // Respond with 'Ok' (we will replace this)
 });
 
 ///////////////////////////////////URLS/new page
@@ -154,6 +159,10 @@ app.get("/urls/:shortURL", (req, res) =>{
   // let userSpecificURLDatabase = {};
   let userIDFromCookie = req.session.user_id;
 
+  if(!userSpecificURLDatabase[req.params.shortURL]){
+    res.status(401).send("<html> <head>Server Response</head><body><h1> You do not own this Tiny URL, you will be redirected to the <a href='/urls'>main page</a></h1></body></html>");
+    return;
+  }
   userSpecificURLDatabase = urlsForUser(userIDFromCookie);
   
   
