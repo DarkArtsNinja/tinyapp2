@@ -1,5 +1,5 @@
 
-const getUserByEmail = function(email, database){
+const getUserByEmail = function(email, users){
 
   for (const user in users) {
     if (users[user.email] === submittedEmail) {
@@ -10,7 +10,7 @@ const getUserByEmail = function(email, database){
 
 };
 
-function emailAlreadyExists(submittedEmail){
+function emailAlreadyExists(submittedEmail, users){
   for (const user in users) {
     if (users[user.email] === submittedEmail) {
       return true;

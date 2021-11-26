@@ -95,6 +95,21 @@ function urlsForUser(userIDFromCookie){
   }
 }
 
+app.get("/", (req, res) => {
+
+  let userIDFromCookie = req.session.user_id;
+
+  userSpecificURLDatabase = urlsForUser(userIDFromCookie);
+
+  const templateVars = { urls: userSpecificURLDatabase, user: req.session.user_id, registeredUsers: users };
+  if (!req.session.user_id) {
+    res.status(401).send("<html> <head>Server Response</head><body><h1> You are not logged in, you will be transferred to the <a href='/login'>login page</a></h1></body></html>");
+    return;
+  }
+
+  res.render("urls_index", templateVars); 
+});
+
 ///////////////////////////////////*this is for the URLS page*/
 app.get("/urls", (req, res) => {
   // let userSpecificURLDatabase = {};
@@ -237,7 +252,7 @@ app.post("/register", (req, res) => {
     res.status(400).send("Either the email or password is missing, please fill it out");
     return;
   }
-  else if (emailAlreadyExists(req.body.email)) {
+  else if (emailAlreadyExists(req.body.email, users)) {
     res.status(400).send("This email already exists");
     res.status(400).send("<html> <head>Server Response</head><body><h1> This email already exists, please click on the <a href='/login'>login page</a></h1></body></html>");
 
